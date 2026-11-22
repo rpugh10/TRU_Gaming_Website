@@ -25,6 +25,10 @@ class DashboardController
             . $role
             . "</p>";
 
+        if ($_SESSION['role'] === 'admin') {
+            echo "<p><a href='index.php?url=members'>Manage members</a></p>";
+        }
+
         echo "<form method='post' action='index.php?url=logout'>
                 <input type='hidden' name='csrf_token' value='$token'>
                 <button type='submit'>Logout</button>
