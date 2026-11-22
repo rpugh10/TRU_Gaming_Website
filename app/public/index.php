@@ -4,11 +4,14 @@ session_start();
 
 require_once '../core/Database.php';
 require_once '../core/Router.php';
+require_once '../core/Auth.php';
 
 require_once '../models/User.php';
+require_once '../models/Member.php';
 
 require_once '../controllers/AuthController.php';
 require_once '../controllers/DashboardController.php';
+require_once '../controllers/MemberController.php';
 
 $router = new Router();
 
@@ -18,5 +21,12 @@ $router->post('login', AuthController::class, 'authenticate');
 $router->get('dashboard', DashboardController::class, 'index');
 
 $router->post('logout', AuthController::class, 'logout');
+
+$router->get('members', MemberController::class, 'index');
+$router->get('members/create', MemberController::class, 'showCreate');
+$router->post('members/create', MemberController::class, 'create');
+$router->get('members/edit', MemberController::class, 'showEdit');
+$router->post('members/edit', MemberController::class, 'update');
+$router->post('members/delete', MemberController::class, 'delete');
 
 $router->dispatch();
