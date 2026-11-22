@@ -10,18 +10,24 @@ class DashboardController
             exit;
         }
 
-        echo "<h1>Dashboard</h1>";
+        $username = htmlspecialchars($_SESSION['username'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $role = htmlspecialchars($_SESSION['role'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $_SESSION['csrf_token'] ??= bin2hex(random_bytes(32));
+        $token = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        echo "<h1>Dashboard " . $username . "</h1>";
 
         echo "<p>Welcome "
-            . $_SESSION['username']
+            . $username
             . "</p>";
 
         echo "<p>Role: "
-            . $_SESSION['role']
+            . $role
             . "</p>";
 
-        echo "<a href='index.php?url=logout'>
-                Logout
-              </a>";
+        echo "<form method='post' action='index.php?url=logout'>
+                <input type='hidden' name='csrf_token' value='$token'>
+                <button type='submit'>Logout</button>
+              </form>";
     }
 }

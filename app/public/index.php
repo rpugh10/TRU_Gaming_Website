@@ -17,6 +17,6 @@ $router->post('login', AuthController::class, 'authenticate');
 
 $router->get('dashboard', DashboardController::class, 'index');
 
-$router->get('logout', AuthController::class, 'logout');
+$router->post('logout', AuthController::class, 'logout');
 
 $router->dispatch();
