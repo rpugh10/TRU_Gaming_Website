@@ -45,7 +45,19 @@ class AuthController
 
     public function logout()
     {
-        session_unset();
+        if(session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $token = $_POST['csrf_token'] ?? '';
+        $sessionToken = $_SESSION['csrf_token'] ?? '';
+
+        if (!is_string($token) || $sessionToken === '' || !hash_equals($sessionToken, $token)) {
+            http_response_code(403);
+            echo "Invalid CSRF token";
+            exit;
+        }
+
+        $_SESSION = [];
 
         session_destroy();
 
