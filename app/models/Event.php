@@ -76,6 +76,7 @@ class Event{
             WHERE event_id = ?
         ";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([$id]);
+        $stmt->execute([$id]);
+        return $stmt->rowCount() === 1;
     }
 }
