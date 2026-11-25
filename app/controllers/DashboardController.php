@@ -10,28 +10,9 @@ class DashboardController
             exit;
         }
 
-        $username = htmlspecialchars($_SESSION['username'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        $role = htmlspecialchars($_SESSION['role'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        $_SESSION['csrf_token'] ??= bin2hex(random_bytes(32));
-        $token = htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-
-        echo "<h1>Dashboard " . $username . "</h1>";
-
-        echo "<p>Welcome "
-            . $username
-            . "</p>";
-
-        echo "<p>Role: "
-            . $role
-            . "</p>";
-
-        if ($_SESSION['role'] === 'admin') {
-            echo "<p><a href='index.php?url=members'>Manage members</a></p>";
-        }
-
-        echo "<form method='post' action='index.php?url=logout'>
-                <input type='hidden' name='csrf_token' value='$token'>
-                <button type='submit'>Logout</button>
-              </form>";
+        $username = $_SESSION['username'];
+        $role = $_SESSION['role'];
+        $token = $_SESSION['csrf_token'] ??= bin2hex(random_bytes(32));
+        require __DIR__ . '/../views/dashboard.php';
     }
 }
