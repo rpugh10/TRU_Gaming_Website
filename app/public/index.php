@@ -8,10 +8,12 @@ require_once '../core/Auth.php';
 
 require_once '../models/User.php';
 require_once '../models/Member.php';
+require_once '../models/Event.php';
 
 require_once '../controllers/AuthController.php';
 require_once '../controllers/DashboardController.php';
 require_once '../controllers/MemberController.php';
+require_once '../controllers/EventController.php';
 
 $router = new Router();
 
@@ -28,5 +30,12 @@ $router->post('members/create', MemberController::class, 'create');
 $router->get('members/edit', MemberController::class, 'showEdit');
 $router->post('members/edit', MemberController::class, 'update');
 $router->post('members/delete', MemberController::class, 'delete');
+
+$router->get('events', EventController::class, 'index');
+$router->get('events/create', EventController::class, 'showCreate');
+$router->post('events/create', EventController::class, 'create');
+$router->get('events/edit', EventController::class, 'showEdit');
+$router->post('events/edit', EventController::class, 'update');
+$router->post('events/delete', EventController::class, 'delete');
 
 $router->dispatch();
