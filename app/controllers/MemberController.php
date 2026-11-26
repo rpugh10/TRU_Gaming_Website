@@ -90,11 +90,31 @@ class MemberController
             $errors[] = 'Enter a valid email address.';
         }
 
+        $password = null;
         if ($id === null) {
             $value = $_POST['user_id'] ?? '';
             $data['user_id'] = is_string($value) ? trim($value) : '';
-            if (filter_var($data['user_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+            $username = $_POST['username'] ?? '';
+            $data['username'] = is_string($username) ? trim($username) : '';
+            $submittedPassword = $_POST['password'] ?? '';
+            $confirmation = $_POST['password_confirmation'] ?? '';
+
+            if ($data['user_id'] === '') {
+                if ($data['username'] === '' || mb_strlen($data['username'], 'UTF-8') > 50) {
+                    $errors[] = 'Enter a username of up to 50 characters.';
+                }
+                if (!is_string($submittedPassword) || mb_strlen($submittedPassword, 'UTF-8') < 12 ||
+                    strlen($submittedPassword) > 72 || str_contains($submittedPassword, "\0")) {
+                    $errors[] = 'Enter a password with at least 12 characters and at most 72 bytes.';
+                } elseif ($submittedPassword !== $confirmation) {
+                    $errors[] = 'The passwords must match.';
+                } else {
+                    $password = $submittedPassword;
+                }
+            } elseif (filter_var($data['user_id'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
                 $errors[] = 'Enter the ID of an existing user account.';
+            } elseif ($data['username'] !== '' || $submittedPassword !== '' || $confirmation !== '') {
+                $errors[] = 'Choose either a new login or an existing user ID.';
             }
         }
 
@@ -104,10 +124,16 @@ class MemberController
         }
 
         try {
-            $saved = $id === null ? $model->create($data) : $model->update($id, $data);
+            $saved = match (true) {
+                $id !== null => $model->update($id, $data),
+                $password !== null => $this->createWithAccount($model, $data, $password),
+                default => $model->create($data),
+            };
         } catch (PDOException $exception) {
             $message = match ((int) ($exception->errorInfo[1] ?? 0)) {
-                1062 => 'That gamertag or email address is already in use.',
+                1062 => $password !== null
+                    ? 'That username, gamertag, or email address is already in use.'
+                    : 'That gamertag or email address is already in use.',
                 1452 => 'The selected user account does not exist.',
                 default => throw $exception,
             };
@@ -129,6 +155,24 @@ class MemberController
         $fields = self::FIELDS;
         $token = $this->csrfToken();
         require __DIR__ . '/../views/member_form.php';
+    }
+
+    private function createWithAccount(Member $model, array $data, string $password): bool
+    {
+        $db = Database::getInstance();
+        $db->beginTransaction();
+
+        try {
+            $data['user_id'] = (new User())->createMemberAccount($data['username'], $password);
+            if (!$model->create($data)) {
+                return false;
+            }
+            return $db->commit();
+        } finally {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+        }
     }
 
     private function requireMember(Member $model, int $id): array
