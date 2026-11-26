@@ -79,4 +79,57 @@ class Event{
         $stmt->execute([$id]);
         return $stmt->rowCount() === 1;
     }
+
+    public function register(int $userId, int $eventId): string
+    {
+        $this->db->beginTransaction();
+
+        try {
+            // Lock the event before reading registrations to serialize requests.
+            $stmt = $this->db->prepare('SELECT max_players FROM events WHERE event_id = ? FOR UPDATE');
+            $stmt->execute([$eventId]);
+            $limit = $stmt->fetchColumn();
+            if ($limit === false) {
+                return 'missing_event';
+            }
+
+            $stmt = $this->db->prepare('SELECT member_id FROM members WHERE user_id = ? LIMIT 2 FOR UPDATE');
+            $stmt->execute([$userId]);
+            $memberIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            if ($memberIds === []) {
+                return 'missing_profile';
+            }
+            if (count($memberIds) > 1) {
+                return 'multiple_profiles';
+            }
+
+            $memberId = $memberIds[0];
+            $stmt = $this->db->prepare(
+                'SELECT COUNT(*) AS total, COUNT(CASE WHEN member_id = ? THEN 1 END) AS already_registered
+                 FROM registrations WHERE event_id = ?'
+            );
+            $stmt->execute([$memberId, $eventId]);
+            $counts = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ((int) $counts['already_registered'] > 0) {
+                return 'duplicate';
+            }
+            if ((int) $counts['total'] >= (int) $limit) {
+                return 'full';
+            }
+
+            $stmt = $this->db->prepare('INSERT INTO registrations (member_id, event_id) VALUES (?, ?)');
+            $stmt->execute([$memberId, $eventId]);
+            $this->db->commit();
+            return 'registered';
+        } catch (PDOException $exception) {
+            if ((int) ($exception->errorInfo[1] ?? 0) === 1062) {
+                return 'duplicate';
+            }
+            throw $exception;
+        } finally {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+        }
+    }
 }

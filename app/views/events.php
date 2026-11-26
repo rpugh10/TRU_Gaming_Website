@@ -16,6 +16,9 @@ require __DIR__ . '/layout_start.php';
 <?php if ($error !== null): ?>
     <p class="alert alert-danger" role="alert"><?= $escape($error) ?></p>
 <?php endif; ?>
+<?php if ($success !== null): ?>
+    <p class="alert alert-success" role="status"><?= $escape($success) ?></p>
+<?php endif; ?>
 
 <?php if ($events === []): ?>
     <p class="card card-body text-body-secondary">No events yet.</p>
@@ -30,9 +33,7 @@ require __DIR__ . '/layout_start.php';
                         <th scope="col">Date</th>
                         <th scope="col">Location</th>
                         <th scope="col">Player limit</th>
-                        <?php if ($canManage): ?>
-                            <th scope="col">Actions</th>
-                        <?php endif; ?>
+                        <th scope="col">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -44,9 +45,14 @@ require __DIR__ . '/layout_start.php';
                             <td><?= $escape($event['event_date']) ?></td>
                             <td><?= $escape($event['location']) ?></td>
                             <td><?= (int) $event['max_players'] ?></td>
-                            <?php if ($canManage): ?>
-                                <td>
-                                    <div class="d-flex gap-2">
+                            <td>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <form method="post" action="index.php?url=events/register">
+                                        <input type="hidden" name="event_id" value="<?= $id ?>">
+                                        <input type="hidden" name="csrf_token" value="<?= $escape($token) ?>">
+                                        <button class="btn btn-sm btn-primary" type="submit">Register</button>
+                                    </form>
+                                    <?php if ($canManage): ?>
                                         <a class="btn btn-sm btn-outline-primary"
                                             href="index.php?url=events/edit&amp;id=<?= $id ?>">Edit</a>
                                         <form method="post" action="index.php?url=events/delete">
@@ -54,9 +60,9 @@ require __DIR__ . '/layout_start.php';
                                             <input type="hidden" name="csrf_token" value="<?= $escape($token) ?>">
                                             <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                                         </form>
-                                    </div>
-                                </td>
-                            <?php endif; ?>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

@@ -8,7 +8,7 @@ require_once '../core/Auth.php';
 
 require_once '../models/User.php';
 require_once '../models/Member.php';
-require_once '../models/Event.php';
+require_once __DIR__ . '/../models/EventModel.php';
 
 require_once '../controllers/AuthController.php';
 require_once '../controllers/DashboardController.php';
@@ -37,5 +37,6 @@ $router->post('events/create', EventController::class, 'create');
 $router->get('events/edit', EventController::class, 'showEdit');
 $router->post('events/edit', EventController::class, 'update');
 $router->post('events/delete', EventController::class, 'delete');
+$router->post('events/register', EventController::class, 'register');
 
 $router->dispatch();
