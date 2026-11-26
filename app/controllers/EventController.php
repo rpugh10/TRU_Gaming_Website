@@ -14,7 +14,8 @@ class EventController
         $canManage = Auth::role() === 'admin';
         $events = (new Event())->getAllEvents();
         $error = $_SESSION['event_error'] ?? null;
-        unset($_SESSION['event_error']);
+        $success = $_SESSION['event_success'] ?? null;
+        unset($_SESSION['event_error'], $_SESSION['event_success']);
         $token = $this->csrfToken();
         require __DIR__ . '/../views/events.php';
     }
@@ -63,6 +64,27 @@ class EventController
             $_SESSION['event_error'] = 'This event has registrations and cannot be deleted.';
         }
 
+        $this->redirectToList();
+    }
+
+    public function register(): void
+    {
+        $this->requireLogin();
+        $this->requireCsrfToken();
+        $eventId = $this->positiveId($_POST['event_id'] ?? null);
+        $result = (new Event())->register((int) $_SESSION['user_id'], $eventId);
+
+        if ($result === 'registered') {
+            $_SESSION['event_success'] = 'You are registered for this event.';
+        } else {
+            $_SESSION['event_error'] = match ($result) {
+                'missing_event' => 'This event is no longer available.',
+                'missing_profile' => 'Ask a club admin to link a member profile to your account before registering.',
+                'multiple_profiles' => 'Ask a club admin to resolve the multiple member profiles linked to your account.',
+                'duplicate' => 'You are already registered for this event.',
+                'full' => 'This event is full.',
+            };
+        }
         $this->redirectToList();
     }
 
@@ -165,6 +187,11 @@ class EventController
     private function requirePostToken(): void
     {
         $this->requireAdmin();
+        $this->requireCsrfToken();
+    }
+
+    private function requireCsrfToken(): void
+    {
         $expected = $_SESSION['csrf_token'] ?? '';
         $submitted = $_POST['csrf_token'] ?? null;
         if ($expected === '' || !is_string($submitted) || !hash_equals($expected, $submitted)) {
