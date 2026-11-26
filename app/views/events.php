@@ -20,55 +20,44 @@ require __DIR__ . '/layout_start.php';
     <p class="alert alert-success" role="status"><?= $escape($success) ?></p>
 <?php endif; ?>
 
-<?php if ($events === []): ?>
-    <p class="card card-body text-body-secondary">No events yet.</p>
-<?php else: ?>
-    <div class="card shadow-sm">
-        <div class="table-responsive" tabindex="0" role="region" aria-label="Events table">
-            <table class="table table-striped align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">Event</th>
-                        <th scope="col">Game</th>
-                        <th scope="col">Date</th>
-                        <th scope="col">Location</th>
-                        <th scope="col">Player limit</th>
-                        <th scope="col">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($events as $event): ?>
-                        <?php $id = (int) $event['event_id']; ?>
-                        <tr>
-                            <td><?= $escape($event['event_name']) ?></td>
-                            <td><?= $escape($event['game_title']) ?></td>
-                            <td><?= $escape($event['event_date']) ?></td>
-                            <td><?= $escape($event['location']) ?></td>
-                            <td><?= (int) $event['max_players'] ?></td>
-                            <td>
-                                <div class="d-flex flex-wrap gap-2">
-                                    <form method="post" action="index.php?url=events/register">
-                                        <input type="hidden" name="event_id" value="<?= $id ?>">
-                                        <input type="hidden" name="csrf_token" value="<?= $escape($token) ?>">
-                                        <button class="btn btn-sm btn-primary" type="submit">Register</button>
-                                    </form>
-                                    <?php if ($canManage): ?>
-                                        <a class="btn btn-sm btn-outline-primary"
-                                            href="index.php?url=events/edit&amp;id=<?= $id ?>">Edit</a>
-                                        <form method="post" action="index.php?url=events/delete">
-                                            <input type="hidden" name="event_id" value="<?= $id ?>">
-                                            <input type="hidden" name="csrf_token" value="<?= $escape($token) ?>">
-                                            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
-                                        </form>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+<form id="event-search" class="mb-3" method="get" action="index.php">
+    <input type="hidden" name="url" value="events">
+    <label class="form-label fw-semibold" for="event-query">Search events</label>
+    <div class="d-flex flex-wrap gap-2">
+        <input class="form-control w-auto flex-grow-1" id="event-query" name="q" type="search"
+            value="<?= $escape($query) ?>" maxlength="200" placeholder="Event name or game title"
+            aria-controls="event-results">
+        <button class="btn btn-outline-primary" type="submit">Search</button>
     </div>
-<?php endif; ?>
+</form>
 
+<p id="event-search-status" class="text-body-secondary" role="status" aria-atomic="true"><?php
+    if ($events === []) {
+        echo $query === '' ? 'No events yet.' : 'No matching events.';
+    } elseif ($query !== '') {
+        echo count($events) . (count($events) === 1 ? ' event found.' : ' events found.');
+    }
+?></p>
+
+<div id="event-results" class="card shadow-sm"<?= $events === [] ? ' hidden' : '' ?>>
+    <div class="table-responsive" tabindex="0" role="region" aria-label="Events table">
+        <table class="table table-striped align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Event</th>
+                    <th scope="col">Game</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Location</th>
+                    <th scope="col">Player limit</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php require __DIR__ . '/event_rows.php'; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="js/event-search.js" defer></script>
 <?php require __DIR__ . '/layout_end.php'; ?>
