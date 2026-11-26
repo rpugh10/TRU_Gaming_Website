@@ -12,12 +12,42 @@ class EventController
     {
         $this->requireLogin();
         $canManage = Auth::role() === 'admin';
-        $events = (new Event())->getAllEvents();
+        $query = $this->searchQuery();
+        $events = (new Event())->getAllEvents($query);
         $error = $_SESSION['event_error'] ?? null;
         $success = $_SESSION['event_success'] ?? null;
         unset($_SESSION['event_error'], $_SESSION['event_success']);
         $token = $this->csrfToken();
         require __DIR__ . '/../views/events.php';
+    }
+
+    public function search(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-store');
+
+        if (!Auth::check()) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Sign in again to search events.']);
+            return;
+        }
+
+        $events = (new Event())->getAllEvents($this->searchQuery());
+        $canManage = Auth::role() === 'admin';
+        $token = $this->csrfToken();
+        $escape = static fn (string $value): string =>
+            htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        ob_start();
+        require __DIR__ . '/../views/event_rows.php';
+        $rows = ob_get_clean();
+
+        echo json_encode(['count' => count($events), 'rows' => $rows], JSON_INVALID_UTF8_SUBSTITUTE);
+    }
+
+    private function searchQuery(): string
+    {
+        $query = $_GET['q'] ?? '';
+        return is_string($query) ? mb_substr(trim($query), 0, 200, 'UTF-8') : '';
     }
 
     public function showCreate(): void

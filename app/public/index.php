@@ -32,6 +32,7 @@ $router->post('members/edit', MemberController::class, 'update');
 $router->post('members/delete', MemberController::class, 'delete');
 
 $router->get('events', EventController::class, 'index');
+$router->get('events/search', EventController::class, 'search');
 $router->get('events/create', EventController::class, 'showCreate');
 $router->post('events/create', EventController::class, 'create');
 $router->get('events/edit', EventController::class, 'showEdit');

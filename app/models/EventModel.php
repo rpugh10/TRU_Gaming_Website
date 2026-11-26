@@ -28,13 +28,17 @@ class Event{
         ]);
     }
 
-    public function getAllEvents() : array{
-        $sql = "
-            SELECT *
-            FROM events
-            ORDER BY event_date ASC ";
+    public function getAllEvents(string $query = ''): array{
+        $sql = 'SELECT event_id, event_name, game_title, event_date, location, max_players FROM events';
+        $params = [];
+        if ($query !== '') {
+            $pattern = '%' . strtr($query, ['!' => '!!', '%' => '!%', '_' => '!_']) . '%';
+            $sql .= " WHERE event_name LIKE ? ESCAPE '!' OR game_title LIKE ? ESCAPE '!'";
+            $params = [$pattern, $pattern];
+        }
+        $sql .= ' ORDER BY event_date ASC, event_id ASC';
         $stmt = $this->db->prepare($sql);
-        $stmt->execute();
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
