@@ -19,6 +19,8 @@ $router = new Router();
 
 $router->get('login', AuthController::class, 'showLogin');
 $router->post('login', AuthController::class, 'authenticate');
+$router->get('signup', MemberController::class, 'showSignup');
+$router->post('signup', MemberController::class, 'signup');
 
 $router->get('dashboard', DashboardController::class, 'index');
 
