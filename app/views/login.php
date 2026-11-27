@@ -12,6 +12,9 @@ require __DIR__ . '/layout_start.php';
                 <?php if ($error !== null): ?>
                     <p class="alert alert-danger" role="alert"><?= $escape($error) ?></p>
                 <?php endif; ?>
+                <?php if ($success !== null): ?>
+                    <p class="alert alert-success" role="status"><?= $escape($success) ?></p>
+                <?php endif; ?>
 
                 <form method="post" action="index.php?url=login">
                     <div class="mb-3">
@@ -26,6 +29,7 @@ require __DIR__ . '/layout_start.php';
                     </div>
                     <button class="btn btn-primary w-100" type="submit">Login</button>
                 </form>
+                <p class="mt-3 mb-0"><a href="index.php?url=signup">Create a member account</a></p>
             </div>
         </div>
     </section>
