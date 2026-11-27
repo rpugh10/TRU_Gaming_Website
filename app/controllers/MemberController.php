@@ -33,6 +33,19 @@ class MemberController
         $this->save(null);
     }
 
+    public function showSignup(): void
+    {
+        $this->requireGuest();
+        $this->showForm(null, [], selfSignup: true);
+    }
+
+    public function signup(): void
+    {
+        $this->requireGuest();
+        $this->requireCsrfToken();
+        $this->save(null, true);
+    }
+
     public function showEdit(): void
     {
         $this->requireAdmin();
@@ -68,7 +81,7 @@ class MemberController
         $this->redirectToList();
     }
 
-    private function save(?int $id): void
+    private function save(?int $id, bool $selfSignup = false): void
     {
         $model = new Member();
 
@@ -92,7 +105,7 @@ class MemberController
 
         $password = null;
         if ($id === null) {
-            $value = $_POST['user_id'] ?? '';
+            $value = $selfSignup ? '' : ($_POST['user_id'] ?? '');
             $data['user_id'] = is_string($value) ? trim($value) : '';
             $username = $_POST['username'] ?? '';
             $data['username'] = is_string($username) ? trim($username) : '';
@@ -119,7 +132,7 @@ class MemberController
         }
 
         if ($errors !== []) {
-            $this->showForm($id, $data, $errors, 422);
+            $this->showForm($id, $data, $errors, 422, $selfSignup);
             return;
         }
 
@@ -137,19 +150,30 @@ class MemberController
                 1452 => 'The selected user account does not exist.',
                 default => throw $exception,
             };
-            $this->showForm($id, $data, [$message], 422);
+            $this->showForm($id, $data, [$message], 422, $selfSignup);
             return;
         }
 
         if (!$saved) {
-            $this->showForm($id, $data, ['Could not save the member.'], 500);
+            $this->showForm($id, $data, ['Could not save the member.'], 500, $selfSignup);
             return;
         }
 
+        if ($selfSignup) {
+            $_SESSION['signup_success'] = 'Your account is ready. Sign in to continue.';
+            header('Location: index.php?url=login', true, 303);
+            exit;
+        }
         $this->redirectToList();
     }
 
-    private function showForm(?int $id, array $data, array $errors = [], int $status = 200): void
+    private function showForm(
+        ?int $id,
+        array $data,
+        array $errors = [],
+        int $status = 200,
+        bool $selfSignup = false
+    ): void
     {
         http_response_code($status);
         $fields = self::FIELDS;
@@ -210,6 +234,19 @@ class MemberController
     private function requirePostToken(): void
     {
         $this->requireAdmin();
+        $this->requireCsrfToken();
+    }
+
+    private function requireGuest(): void
+    {
+        if (Auth::check()) {
+            header('Location: index.php?url=dashboard', true, 303);
+            exit;
+        }
+    }
+
+    private function requireCsrfToken(): void
+    {
         $expected = $_SESSION['csrf_token'] ?? '';
         $submitted = $_POST['csrf_token'] ?? null;
         if ($expected === '' || !is_string($submitted) || !hash_equals($expected, $submitted)) {

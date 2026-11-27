@@ -5,7 +5,8 @@ class AuthController
     public function showLogin()
     {
         $error = $_SESSION['error'] ?? null;
-        unset($_SESSION['error']);
+        $success = $_SESSION['signup_success'] ?? null;
+        unset($_SESSION['error'], $_SESSION['signup_success']);
         require __DIR__ . '/../views/login.php';
     }
 
